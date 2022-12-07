@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:13.4
+    environment:
+      POSTGRES_USER: hib
+      POSTGRES_PASSWORD: 12345
+    command: -c shared_preload_libraries=pg_stat_statements -c password_encryption=scram-sha-256
+    container_name: hib_postgres
+    volumes:
+      - ./development/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "5111:5432"
+  postgres_flyway:
+    image: flyway/flyway:7.14.0-alpine
+    command: migrate
+    volumes:
+      - ./development/flyway:/flyway/conf
+      - ./src/main/resources/db/migration:/flyway/sql
+    depends_on:
+      - postgres
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.3.0/24
